@@ -8,8 +8,8 @@ export function setupAutocomplete(inputElement, listElement, dataArray, onSelect
         selectedIndex = -1;
 
         const matches = val
-            ? dataArray.filter(item => item.toLowerCase().includes(val.toLowerCase())).slice(0, 50)
-            : dataArray.slice(0, 50);
+            ? dataArray.filter(item => item.toLowerCase().includes(val.toLowerCase()))
+            : dataArray;
 
         if (matches.length === 0) {
             listElement.innerHTML = '<div class="autocomplete-item" style="color: var(--text-muted); pointer-events: none;">No matches found</div>';

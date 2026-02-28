@@ -1,9 +1,9 @@
 import { formatName } from '../utils/helpers.js';
 
 export const GAME_VERSIONS = {
-    'frlg': { label: 'FR/LG', themeClass: 'theme-frlg', versions: ["firered", "leafgreen"], spriteVersionGroup: 'generation-iii/firered-leafgreen' },
-    'rs': { label: 'R/S', themeClass: 'theme-rs', versions: ["ruby", "sapphire"], spriteVersionGroup: 'generation-iii/ruby-sapphire' },
-    'emerald': { label: 'Emerald', themeClass: 'theme-emerald', versions: ["emerald"], spriteVersionGroup: 'generation-iii/emerald' }
+    'frlg': { label: 'FR/LG', themeClass: 'theme-frlg', versions: ["firered", "leafgreen"], spriteVersionGroup: 'generation-iii/firered-leafgreen', pokedexId: 2 },
+    'rs': { label: 'R/S', themeClass: 'theme-rs', versions: ["ruby", "sapphire"], spriteVersionGroup: 'generation-iii/ruby-sapphire', pokedexId: 4 },
+    'emerald': { label: 'Emerald', themeClass: 'theme-emerald', versions: ["emerald"], spriteVersionGroup: 'generation-iii/emerald', pokedexId: 4 }
 };
 
 class PokeApiService {
@@ -44,12 +44,12 @@ class PokeApiService {
         this.cleanupCache();
 
         // Check cache
-        const cacheKey = `evAppData_${this.gameId}_v6`;
+        const cacheKey = `evAppData_${this.gameId}_v7`;
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             try {
                 const parsed = JSON.parse(cachedData);
-                if (parsed && parsed.encounters && parsed.pokemonListArray && parsed.encounters[0]?.rarity !== undefined) {
+                if (parsed && parsed.encounters && parsed.pokemonListArray && parsed.pokedex) {
                     console.log("Cached data found: " + parsed.encounters.length + " encounters.");
                     this.data = parsed;
                     return this.data;
@@ -94,6 +94,24 @@ class PokeApiService {
             }
           }
         }
+        pokemon_v2_pokedex_by_pk(id: ${config.pokedexId}) {
+          pokemon_v2_pokemondexnumbers(order_by: {pokedex_number: asc}) {
+            pokedex_number
+            pokemon_v2_pokemonspecies {
+              name
+              pokemon_v2_pokemons {
+                id
+                name
+                pokemon_v2_pokemonstats(where: {effort: {_gt: 0}}) {
+                  effort
+                  pokemon_v2_stat {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     `;
 
@@ -124,7 +142,7 @@ class PokeApiService {
             }
 
             console.log("Raw data received, processing...");
-            this.data = this.processData(result.data.pokemon_v2_encounter);
+            this.data = this.processData(result.data.pokemon_v2_encounter, result.data.pokemon_v2_pokedex_by_pk);
             console.log("Processing complete. Saving to cache...");
 
             try {
@@ -155,7 +173,7 @@ class PokeApiService {
     }
 
     cleanupCache(aggressive = false) {
-        const currentVersion = '_v6';
+        const currentVersion = '_v7';
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('evAppData_')) {
@@ -179,12 +197,42 @@ class PokeApiService {
         }
     }
 
-    processData(encountersRaw) {
+    processData(encountersRaw, pokedexRaw) {
         const data = {
             encounters: [],
             locations: new Set(),
-            pokemonList: new Set()
+            pokemonList: new Set(),
+            pokedex: []
         };
+
+        // Process Pokedex first to get the "Full" list even for non-wild pokemon
+        const pokedexPokemon = [];
+        const seenPokedexIds = new Set();
+
+        if (pokedexRaw && pokedexRaw.pokemon_v2_pokemondexnumbers) {
+            pokedexRaw.pokemon_v2_pokemondexnumbers.forEach(entry => {
+                const species = entry.pokemon_v2_pokemonspecies;
+                const pkm = species.pokemon_v2_pokemons[0]; // Get base form
+                if (pkm) {
+                    const evYields = pkm.pokemon_v2_pokemonstats.map(stat => ({
+                        stat: stat.pokemon_v2_stat.name,
+                        effort: stat.effort
+                    }));
+
+                    const pkmObj = {
+                        name: formatName(pkm.name),
+                        id: pkm.id,
+                        yields: evYields,
+                        dexNumber: entry.pokedex_number
+                    };
+
+                    pokedexPokemon.push(pkmObj);
+                    seenPokedexIds.add(pkm.id);
+                }
+            });
+        }
+
+        data.pokedex = pokedexPokemon;
 
         encountersRaw.forEach(enc => {
             const locationAreaName = enc.pokemon_v2_locationarea.name;
@@ -222,17 +270,25 @@ class PokeApiService {
         });
 
         data.locations = Array.from(data.locations).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-        // Change from Set of strings to array of objects with id for search
-        const uniquePkmKeys = new Set();
-        const pkmList = [];
+
+        // Build searchable pokemon list: Merging Pokedex + Encounter list (if any were missed, though pokedex should be primary)
+        const pkmListMap = new Map();
+
+        // Add everyone from Pokedex first
+        data.pokedex.forEach(p => {
+            pkmListMap.set(p.name, { name: p.name, id: p.id, yields: p.yields, dexNumber: p.dexNumber });
+        });
+
+        // Add any found in encounters (e.g. if they aren't in that specific regional dex but are in the game)
         data.encounters.forEach(e => {
-            if (!uniquePkmKeys.has(e.pokemon)) {
-                uniquePkmKeys.add(e.pokemon);
-                pkmList.push({ name: e.pokemon, id: e.id, yields: e.yields });
+            if (!pkmListMap.has(e.pokemon)) {
+                // If it's not in dex, it might be an extra (like post-game)
+                // We'll give it a high dex number so it stays at the end
+                pkmListMap.set(e.pokemon, { name: e.pokemon, id: e.id, yields: e.yields, dexNumber: 9999 + e.id });
             }
         });
 
-        data.pokemonListArray = pkmList.sort((a, b) => a.id - b.id);
+        data.pokemonListArray = Array.from(pkmListMap.values()).sort((a, b) => a.dexNumber - b.dexNumber);
         data.pokemonList = data.pokemonListArray.map(p => p.name);
 
         console.log("Data processing complete. Pokemon found: " + data.pokemonListArray.length);
