@@ -549,7 +549,7 @@ label {
   border: 1px solid var(--panel-border);
   border-radius: var(--border-radius-md);
   margin-top: 4px;
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
   z-index: 100;
   display: none;

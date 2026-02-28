@@ -44,7 +44,7 @@ class PokeApiService {
         this.cleanupCache();
 
         // Check cache
-        const cacheKey = `evAppData_${this.gameId}_v8`;
+        const cacheKey = `evAppData_${this.gameId}_v9`;
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             try {
@@ -67,7 +67,7 @@ class PokeApiService {
 
         const query = `
       query {
-        pokemon_v2_encounter(where: {pokemon_v2_version: {name: {_in: [${versionsString}]}}}) {
+        pokemon_v2_encounter(where: {pokemon_v2_version: {name: {_in: [${versionsString}]}}}, limit: 5000) {
           pokemon_v2_pokemon {
             name
             id
@@ -95,7 +95,7 @@ class PokeApiService {
           }
         }
         pokemon_v2_pokedex_by_pk(id: ${config.pokedexId}) {
-          pokemon_v2_pokemondexnumbers(order_by: {pokedex_number: asc}) {
+          pokemon_v2_pokemondexnumbers(order_by: {pokedex_number: asc}, limit: 1000) {
             pokedex_number
             pokemon_v2_pokemonspecy {
               name
@@ -173,7 +173,7 @@ class PokeApiService {
     }
 
     cleanupCache(aggressive = false) {
-        const currentVersion = '_v8';
+        const currentVersion = '_v9';
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('evAppData_')) {
