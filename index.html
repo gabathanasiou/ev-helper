@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LeafGreen & FireRed EV Helper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="app-terminal">
+        <div class="terminal-toolbar">
+            <div class="terminal-title" style="display: flex; gap: 16px; align-items: center;">
+                <svg width="200" height="32" viewBox="0 0 200 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logo-text-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#38bdf8" />
+                            <stop offset="100%" stop-color="#a78bfa" />
+                        </linearGradient>
+                        <linearGradient id="pokeball-top" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ef4444" />
+                            <stop offset="100%" stop-color="#b91c1c" />
+                        </linearGradient>
+                        <linearGradient id="pokeball-bot" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#f8fafc" />
+                            <stop offset="100%" stop-color="#cbd5e1" />
+                        </linearGradient>
+                    </defs>
+                    <g transform="translate(0, 4)">
+                        <circle cx="12" cy="12" r="12" fill="#0f172a" />
+                        <path d="M 0 12 A 12 12 0 0 1 24 12 Z" fill="url(#pokeball-top)" />
+                        <path d="M 0 12 A 12 12 0 0 0 24 12 Z" fill="url(#pokeball-bot)" />
+                        <rect x="0" y="10" width="24" height="4" fill="#0f172a" />
+                        <circle cx="12" cy="12" r="4" fill="#0f172a" />
+                        <circle cx="12" cy="12" r="2.5" fill="#f8fafc" />
+                    </g>
+                    <text x="32" y="22" font-family="'Inter', -apple-system, sans-serif" font-weight="900"
+                        font-size="18" fill="url(#logo-text-grad)" letter-spacing="1">EV_HELPER</text>
+                </svg>
+                <div class="game-selector game-dropdown"
+                    style="padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.15);">
+                    <button class="game-btn active" id="game-dropdown-trigger" title="Select Game">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M5 2h14a1 1 0 0 1 1 1v12l-2 3v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3l-2-3V3a1 1 0 0 1 1-1z" />
+                            <rect x="7" y="10" width="10" height="8" rx="1" />
+                            <path d="M8 2v3M16 2v3" />
+                        </svg>
+                        <span id="game-dropdown-label">FR/LG</span>
+                        <span style="font-size: 0.7rem; margin-left: 4px;">▼</span>
+                    </button>
+                    <div class="game-dropdown-menu" id="game-dropdown-menu">
+                        <button class="game-btn frlg-btn" data-game="frlg">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
+                                <path
+                                    d="M5 2h14a1 1 0 0 1 1 1v12l-2 3v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3l-2-3V3a1 1 0 0 1 1-1z" />
+                                <rect x="7" y="10" width="10" height="8" rx="1" />
+                                <path d="M8 2v3M16 2v3" />
+                            </svg>
+                            <span>FR/LG</span>
+                        </button>
+                        <button class="game-btn rs-btn" data-game="rs">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #60a5fa;">
+                                <path
+                                    d="M5 2h14a1 1 0 0 1 1 1v12l-2 3v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3l-2-3V3a1 1 0 0 1 1-1z" />
+                                <rect x="7" y="10" width="10" height="8" rx="1" />
+                                <path d="M8 2v3M16 2v3" />
+                            </svg>
+                            <span>R/S</span>
+                        </button>
+                        <button class="game-btn emerald-btn" data-game="emerald">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;">
+                                <path
+                                    d="M5 2h14a1 1 0 0 1 1 1v12l-2 3v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3l-2-3V3a1 1 0 0 1 1-1z" />
+                                <rect x="7" y="10" width="10" height="8" rx="1" />
+                                <path d="M8 2v3M16 2v3" />
+                            </svg>
+                            <span>Emerald</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="toolbar-actions" style="display: flex; gap: 8px; align-items: center;">
+                <button id="btn-zoom-out" class="btn btn-outline btn-small" title="Zoom Out">−</button>
+                <button id="btn-zoom-reset" class="btn btn-outline btn-small" title="Reset Zoom">100%</button>
+                <button id="btn-zoom-in" class="btn btn-outline btn-small" title="Zoom In">+</button>
+                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
+                <button id="btn-add-pane" class="btn btn-outline btn-small" title="Open New Session">+ New
+                    Session</button>
+            </div>
+        </div>
+
+        <!-- Workspace contains 1 or more Panes -->
+        <div id="workspace" class="workspace">
+            <!-- SessionPanes are injected here by main.js -->
+        </div>
+
+        <!-- STATUS / LOADING OVERLAY -->
+        <div id="loading-overlay" class="loading-overlay active">
+            <div class="spinner"></div>
+            <p id="loading-text" style="font-family: inherit;">BOOTING_SYSTEM...</p>
+        </div>
+    </div>
+
+    <script src="js/main.js" type="module"></script>
+</body>
+
+</html>
