@@ -44,7 +44,7 @@ class PokeApiService {
         this.cleanupCache();
 
         // Check cache
-        const cacheKey = `evAppData_${this.gameId}_v7`;
+        const cacheKey = `evAppData_${this.gameId}_v8`;
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             try {
@@ -97,7 +97,7 @@ class PokeApiService {
         pokemon_v2_pokedex_by_pk(id: ${config.pokedexId}) {
           pokemon_v2_pokemondexnumbers(order_by: {pokedex_number: asc}) {
             pokedex_number
-            pokemon_v2_pokemonspecies {
+            pokemon_v2_pokemonspecy {
               name
               pokemon_v2_pokemons {
                 id
@@ -173,7 +173,7 @@ class PokeApiService {
     }
 
     cleanupCache(aggressive = false) {
-        const currentVersion = '_v7';
+        const currentVersion = '_v8';
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('evAppData_')) {
@@ -211,7 +211,7 @@ class PokeApiService {
 
         if (pokedexRaw && pokedexRaw.pokemon_v2_pokemondexnumbers) {
             pokedexRaw.pokemon_v2_pokemondexnumbers.forEach(entry => {
-                const species = entry.pokemon_v2_pokemonspecies;
+                const species = entry.pokemon_v2_pokemonspecy;
                 const pkm = species.pokemon_v2_pokemons[0]; // Get base form
                 if (pkm) {
                     const evYields = pkm.pokemon_v2_pokemonstats.map(stat => ({
