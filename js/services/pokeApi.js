@@ -44,7 +44,7 @@ class PokeApiService {
         this.cleanupCache();
 
         // Check cache
-        const cacheKey = `evAppData_${this.gameId}_v5`;
+        const cacheKey = `evAppData_${this.gameId}_v6`;
         const cachedData = localStorage.getItem(cacheKey);
         if (cachedData) {
             try {
@@ -155,7 +155,7 @@ class PokeApiService {
     }
 
     cleanupCache(aggressive = false) {
-        const currentVersion = '_v5';
+        const currentVersion = '_v6';
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('evAppData_')) {
@@ -232,7 +232,7 @@ class PokeApiService {
             }
         });
 
-        data.pokemonListArray = pkmList.sort((a, b) => a.name.localeCompare(b.name));
+        data.pokemonListArray = pkmList.sort((a, b) => a.id - b.id);
         data.pokemonList = data.pokemonListArray.map(p => p.name);
 
         console.log("Data processing complete. Pokemon found: " + data.pokemonListArray.length);
