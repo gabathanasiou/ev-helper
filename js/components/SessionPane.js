@@ -770,20 +770,19 @@ export class SessionPane {
 
         // Prevent duplicates already handled
 
-        const encountersWithPkm = pokeApi.data.encounters.filter(e => e.pokemon === pokemonName);
-        if (encountersWithPkm.length === 0) {
-            // Only add 'no data' if empty
+        const pkmObj = pokeApi.data.pokemonListArray.find(p => p.name === pokemonName);
+        if (!pkmObj) {
             if (this.pokemonResultsContainer.children.length === 0) {
-                this.pokemonResultsContainer.innerHTML = `<div class="result-card"><p>No data found.</p></div>`;
+                this.pokemonResultsContainer.innerHTML = `<div class="result-card"><p>Pokémon data not found.</p></div>`;
             }
             return;
         }
 
-        const pkmObj = pokeApi.data.pokemonListArray.find(p => p.name === pokemonName);
+        const encountersWithPkm = pokeApi.data.encounters.filter(e => e.pokemon === pokemonName);
         const spriteVersion = GAME_VERSIONS[pokeApi.gameId].spriteVersionGroup;
-        const spriteHtml = pkmObj ? `<img src="${getSpriteUrl(pkmObj.id, spriteVersion)}" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pkmObj.id}.png'" style="width: 96px; height: 96px; object-fit: contain; image-rendering: pixelated;">` : '';
+        const spriteHtml = `<img src="${getSpriteUrl(pkmObj.id, spriteVersion)}" onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pkmObj.id}.png'" style="width: 96px; height: 96px; object-fit: contain; image-rendering: pixelated;">`;
 
-        const yields = encountersWithPkm[0].yields;
+        const yields = pkmObj.yields;
         const locations = Array.from(new Set(encountersWithPkm.map(e => e.location))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
         const card = document.createElement('div');
@@ -801,6 +800,7 @@ export class SessionPane {
           <button class="btn btn-icon btn-remove-card">×</button>
       </div>
       
+      ${locations.length > 0 ? `
       <h4 class="text-muted" style="margin-bottom: 8px; margin-top: 12px; font-size: 0.9rem;">Locations</h4>
       <div style="display: flex; flex-direction: column; gap: 4px;">
         ${locations.map(loc => {
@@ -817,7 +817,12 @@ export class SessionPane {
                 <span class="text-muted" style="font-size: 0.85rem; padding-top: 4px;">${rarityStr}</span>
             </div>`;
         }).join('')}
+      </div>` : `
+      <div style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center; border: 1px dashed rgba(255,255,255,0.1);">
+        <p class="text-muted" style="font-size: 0.9rem; margin: 0;">No wild encounters found in this game.</p>
+        <p style="font-size: 0.75rem; opacity: 0.6; margin-top: 4px;">(This Pokémon may be a starter, evolved form, or event gift)</p>
       </div>
+      `}
     `;
 
         card.querySelector('.btn-remove-card').addEventListener('click', () => {
