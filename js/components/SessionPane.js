@@ -58,7 +58,7 @@ export class SessionPane {
       <div class="pane-header" draggable="true" style="cursor: grab;">
         <h2 class="pane-title">Research <span>#${this.id}</span></h2>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-icon btn-clear-session" title="Clear Search Results" aria-label="Clear">⎚</button>
+          <button class="btn btn-icon btn-clear-session" title="Clear Search Results" aria-label="Clear">🗑</button>
           <button class="btn btn-icon btn-close-pane" title="Close Panel" aria-label="Close">×</button>
         </div>
       </div>
