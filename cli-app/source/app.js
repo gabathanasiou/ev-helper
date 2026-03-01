@@ -50,6 +50,7 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 	const hoveredValueRef = useRef(null);
 	const activeItemsRef = useRef([]);
 	const activeOnSelectRef = useRef(null);
+	const [searchKey, setSearchKey] = useState(0);
 
 	const t = THEMES[themeKey] || THEMES['firered'];
 	const { Indicator, Item } = useMemo(() => makeComponents(t), [themeKey]);
@@ -168,6 +169,7 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 
 			if (isTyping || isBackspacing) {
 				setIsFocused(true);
+				setSearchKey(s => s + 1);
 				dashCursorRef.current = 0;
 				if (isBackspacing) {
 					setQuery(q => q.slice(0, -1));
@@ -545,6 +547,7 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 			<Box borderStyle="round" borderColor={isFocused ? t.borderFocus : t.border} paddingX={2}>
 				<Text color={t.accent}>❯ </Text>
 				<TextInput
+					key={`search-${activeMode}-${searchKey}`}
 					value={query}
 					onChange={v => {
 						setQuery(v);
