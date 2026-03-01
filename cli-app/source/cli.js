@@ -31,7 +31,7 @@ process.on('exit', () => {
 	process.stdout.write('\x1b[?1049l');
 });
 
-const { waitUntilExit } = render(<App game="frlg" initialMode={initialMode} initialQuery={initialQuery} />);
+const { waitUntilExit } = render(<App initialMode={initialMode} initialQuery={initialQuery} />);
 
 waitUntilExit().then(() => {
 	process.exit(0);

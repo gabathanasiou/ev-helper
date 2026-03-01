@@ -56,7 +56,7 @@ function StaticSelectInput({
 
         const absoluteIndex = (totalItems - rotateIndex + selectedIndex) % totalItems;
 
-        if (input === 'k' || key.upArrow) {
+        if (key.upArrow) {
             if (absoluteIndex === 0) {
                 if (hasLimit) {
                     setRotateIndex(-(totalItems - limit));
@@ -73,7 +73,7 @@ function StaticSelectInput({
             }
         }
 
-        if (input === 'j' || key.downArrow) {
+        if (key.downArrow) {
             if (absoluteIndex === totalItems - 1) {
                 setRotateIndex(0);
                 setSelectedIndex(0);

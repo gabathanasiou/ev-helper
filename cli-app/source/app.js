@@ -5,6 +5,10 @@ import SelectInput from './StaticSelectInput.js';
 import { fetchData } from './api.js';
 import { exec } from 'child_process';
 import { THEMES, THEME_KEYS, GAME_DEFAULT_THEME, hexToRgb } from './themes.js';
+import Conf from 'conf';
+
+const config = new Conf({ projectName: 'ev-helper' });
+
 
 const MODES = ['pokemon', 'route', 'stat'];
 const GAME_LABELS = { 'frlg': 'FireRed/LeafGreen', 'rs': 'Ruby/Sapphire', 'emerald': 'Emerald' };
@@ -36,8 +40,9 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 	const [loadFrame, setLoadFrame] = useState('⠋');
 	const [modeIndex, setModeIndex] = useState(Math.max(0, MODES.indexOf(initialMode.toLowerCase())));
 	const [isFocused, setIsFocused] = useState(true);
-	const [activeGame, setActiveGame] = useState(game);
-	const [themeKey, setThemeKey] = useState(initialTheme || GAME_DEFAULT_THEME[game] || 'firered');
+	const [activeGame, setActiveGame] = useState(game || config.get('game') || 'frlg');
+	const [themeKey, setThemeKey] = useState(initialTheme || config.get('theme') || GAME_DEFAULT_THEME[activeGame] || 'firered');
+
 	const [dims, setDims] = useState({ c: process.stdout.columns || 80, r: process.stdout.rows || 24 });
 	const [historyStack, setHistoryStack] = useState([]);
 	const cursorRef = useRef(0);
@@ -52,7 +57,10 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 	// ── Apply background color when theme changes ──
 	useEffect(() => {
 		applyBg(t.bg);
-	}, [themeKey]);
+		config.set('theme', themeKey);
+		config.set('game', activeGame);
+	}, [themeKey, activeGame]);
+
 
 	// ── Resize ──
 	useEffect(() => {
@@ -153,7 +161,24 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 			return;
 		}
 
-		if (key.tab && !currentView) { setModeIndex(p => (p + 1) % MODES.length); setQuery(''); setIsFocused(true); }
+		// Handle typing when not focused on the search box (dashboard only)
+		if (!isFocused && !currentView) {
+			const isTyping = input.length > 0 && !input.startsWith('\x1b') && !key.ctrl && !key.meta && !key.upArrow && !key.downArrow && !key.leftArrow && !key.rightArrow && !key.return && !key.enter && !key.escape && !key.tab;
+			const isBackspacing = key.backspace || key.delete;
+
+			if (isTyping || isBackspacing) {
+				setIsFocused(true);
+				dashCursorRef.current = 0;
+				if (isBackspacing) {
+					setQuery(q => q.slice(0, -1));
+				} else {
+					setQuery(q => q + input);
+				}
+				return;
+			}
+		}
+
+		if (key.tab && !currentView) { setModeIndex(p => (p + 1) % MODES.length); setQuery(''); setIsFocused(true); dashCursorRef.current = 0; }
 		if (key.tab && currentView && (currentView.type === 'ROUTE' || currentView.type === 'STAT')) {
 			setHistoryStack(s => {
 				const n = [...s];
@@ -162,14 +187,19 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 				return n;
 			});
 		}
-		if (key.escape || key.leftArrow) {
+		if (key.escape || key.leftArrow || ((key.backspace || key.delete) && currentView)) {
 			if (currentView) popHistory();
 			else if (key.escape) exit();
 			else if (!isFocused) setIsFocused(true);
 		}
-		if (key.downArrow && isFocused && displayList.length > 0) setIsFocused(false);
-		if ((key.return || key.enter || key.rightArrow) && isFocused && displayList.length > 0) setIsFocused(false);
-		if (input.toLowerCase() === 'n' && key.ctrl) { setHistoryStack([]); setQuery(''); setIsFocused(true); cursorRef.current = 0; }
+		if (key.downArrow && isFocused && displayList.length > 0) {
+			setIsFocused(false);
+			dashCursorRef.current = clampedIndex(1, displayList);
+		}
+		if ((key.return || key.enter || key.rightArrow) && isFocused && displayList.length > 0) {
+			handleSelect(displayList[0]);
+		}
+		if (input.toLowerCase() === 'n' && key.ctrl) { setHistoryStack([]); setQuery(''); setIsFocused(true); cursorRef.current = 0; dashCursorRef.current = 0; }
 	});
 
 	// ── Display list ──
@@ -199,7 +229,10 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 				.map(p => {
 					const ev = p.yields.map(y => `+${y.effort} ${y.stat.toUpperCase().slice(0, 3)}`).join(' ');
 					const dex = p.dexNumber < 9999 ? `#${String(p.dexNumber).padStart(3, '0')}` : '    ';
-					return { label: `${dex}  ${p.name.padEnd(16)} ${ev}`, value: `PKM:${p.id}` };
+					const pEncs = data.encounters.filter(e => e.id === p.id);
+					const methods = [...new Set(pEncs.map(e => e.method))];
+					const methodStr = methods.length > 0 ? methods.join(', ') : 'No encounters';
+					return { label: `${dex}  ${p.name.padEnd(16)} ${ev.padEnd(22)} ${methodStr}`, value: `PKM:${p.id}` };
 				});
 		}
 		if (activeMode === 'route') {
@@ -267,7 +300,7 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 	// ── Sort bar component ──
 	const SortBar = ({ sortMode }) => (
 		<Box marginLeft={1} marginBottom={1}>
-			<Text color={t.muted}>Sort by:  </Text>
+			<Text color={t.muted}>Sort by ↓  </Text>
 			{SORT_MODES.map((sm, i) => (
 				<Box key={sm} marginRight={1}>
 					<Text
@@ -399,7 +432,7 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 						const locArr = Array.from(x.locs);
 						let locStr = locArr.slice(0, 2).join(', ');
 						if (locArr.length > 2) locStr += ` (+${locArr.length - 2} more)`;
-						return { label: `  +${x.effort}  ${x.p.name.padEnd(16)} (${locStr})`, value: `pkm:${x.p.id}` };
+						return { label: `  +${x.effort}  ${x.p.name.padEnd(16)} ${locStr}`, value: `pkm:${x.p.id}` };
 					})
 				];
 				return (
@@ -513,7 +546,11 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 				<Text color={t.accent}>❯ </Text>
 				<TextInput
 					value={query}
-					onChange={v => { setQuery(v); setIsFocused(true); }}
+					onChange={v => {
+						setQuery(v);
+						setIsFocused(true);
+						dashCursorRef.current = 0;
+					}}
 					focus={isFocused}
 					placeholder={`search ${activeMode}...`}
 				/>
@@ -558,8 +595,6 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 				<Box>
 					<Text bold color={t.accent}>ev-helper</Text>
 					<Text color={t.muted}> · {GAME_LABELS[activeGame]}</Text>
-					<Text color={t.muted}> · </Text>
-					<Text color={t.accent2}>{t.name}</Text>
 				</Box>
 				{loading
 					? <Text color={t.accent2}>{loadFrame} syncing</Text>
@@ -592,23 +627,15 @@ export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQue
 			{/* Footer */}
 			<Box flexShrink={0} justifyContent="space-between" paddingX={1} borderStyle="round" borderColor={t.border}>
 				{currentView ? (
-					<Text color={t.muted}>
-						<Text color={t.accent}>→/enter</Text>{' '}select{'  '}
-						<Text color={t.accent}>←/esc</Text>{' '}back{'  '}
-						{(currentView.type === 'ROUTE' || currentView.type === 'STAT') && <><Text color={t.accent}>tab</Text>{' '}sort{'  '}</>}
-						<Text color={t.accent}>ctrl+s</Text>{' '}new term{'  '}
-						<Text color={t.accent}>ctrl+n</Text>{' '}home
+					<Text color={t.muted} wrap="truncate-end">
+						<Text color={t.accent}>enter</Text> select  <Text color={t.accent}>esc</Text> back  {(currentView.type === 'ROUTE' || currentView.type === 'STAT') && <><Text color={t.accent}>tab</Text> sort  </>}<Text color={t.accent}>^s</Text> new term  <Text color={t.accent}>^n</Text> home
 					</Text>
 				) : (
-					<Text color={t.muted}>
-						<Text color={t.accent}>tab</Text>{' '}mode{'  '}
-						<Text color={t.accent}>↓/enter</Text>{' '}select{'  '}
-						{!isFocused && <><Text color={t.accent}>ctrl+s</Text>{' '}open in new term{'  '}</>}
-						<Text color={t.accent}>/</Text>{' '}cmds{'  '}
-						<Text color={t.accent}>esc</Text>{' '}quit
+					<Text color={t.muted} wrap="truncate-end">
+						<Text color={t.accent}>tab</Text> mode  <Text color={t.accent}>↓/enter</Text> select  {!isFocused && <><Text color={t.accent}>^s</Text> new term  </>}<Text color={t.accent}>/</Text> cmds  <Text color={t.accent}>esc</Text> quit
 					</Text>
 				)}
-				<Text color={t.muted}>{t.name} theme</Text>
+				<Text color={t.accent2} flexShrink={0}> {t.name}</Text>
 			</Box>
 		</Box>
 	);
