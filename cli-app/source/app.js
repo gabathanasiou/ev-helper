@@ -32,7 +32,7 @@ function makeComponents(t) {
 	return { Indicator, Item };
 }
 
-export default function App({ game = 'frlg', initialMode = 'POKEMON', initialQuery = '', initialTheme = null }) {
+export default function App({ game, initialMode = 'POKEMON', initialQuery = '', initialTheme = null }) {
 	const { exit } = useApp();
 	const [query, setQuery] = useState(initialQuery);
 	const [data, setData] = useState(null);
