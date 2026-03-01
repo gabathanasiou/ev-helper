@@ -66,11 +66,15 @@
 html,
 body {
   height: 100%;
+  background-color: var(--bg-color);
+  /* Fallback for safe-areas */
   background: var(--bg-gradient);
   color: var(--text-main);
   font-family: var(--font-family);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  touch-action: pan-x pan-y;
+  /* Discourage pinch-zoom gestures while allowing scrolling */
 }
 
 #background-elements {
@@ -128,7 +132,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding: var(--spacing-md);
+  /* iOS safe-area: respect notch at top, home bar at bottom */
+  padding: calc(var(--spacing-md) + env(safe-area-inset-top)) calc(var(--spacing-md) + env(safe-area-inset-right)) calc(var(--spacing-md) + env(safe-area-inset-bottom)) calc(var(--spacing-md) + env(safe-area-inset-left));
   gap: var(--spacing-md);
 }
 
@@ -150,6 +155,20 @@ body {
 .terminal-title {
   display: flex;
   align-items: center;
+}
+
+/* Logo wordmark replacing the old SVG */
+.logo-wordmark {
+  font-family: var(--font-family);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #38bdf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 /* Tiling Workspace - Preserved from Terminal fix */
@@ -355,8 +374,7 @@ label {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+  background: var(--primary-hover);
 }
 
 .btn-primary:active {
@@ -549,7 +567,7 @@ label {
   border: 1px solid var(--panel-border);
   border-radius: var(--border-radius-md);
   margin-top: 4px;
-  max-height: 400px;
+  max-height: 200px;
   overflow-y: auto;
   z-index: 100;
   display: none;
@@ -664,5 +682,207 @@ label {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal-content {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+  margin: 0;
+  /* Override generic glass-panel margin if any */
+}
+
+.modal-overlay.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.modal-body h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.modal-body p {
+  margin-bottom: 1rem;
+  color: var(--text-main);
+  opacity: 0.9;
+}
+
+/* ============================================
+   RESPONSIVE / MOBILE  (≤ 640px)
+   ============================================ */
+@media (max-width: 640px) {
+
+  /* ── App shell – use env() for iOS notch + home bar ── */
+  .app-terminal {
+    padding: calc(8px + env(safe-area-inset-top, 0px)) calc(8px + env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) calc(8px + env(safe-area-inset-left, 0px));
+    gap: 8px;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ── Header ─────────────────────────────── */
+  .terminal-toolbar {
+    padding: 8px 12px;
+    flex-shrink: 0;
+  }
+
+  /* Compact wordmark on small screens */
+  .logo-wordmark {
+    font-size: 0.9rem;
+  }
+
+  /* Tighten the game-selector left border gap */
+  .terminal-title .game-selector {
+    padding-left: 10px !important;
+  }
+
+  /* Hide zoom controls on mobile */
+  #btn-zoom-out,
+  #btn-zoom-in,
+  #btn-zoom-reset {
+    display: none !important;
+  }
+
+  /* Hide the "+New Research" button on mobile */
+  #btn-add-pane {
+    display: none !important;
+  }
+
+  /* Hide inline separator divs */
+  .toolbar-actions>div[style*="width: 1px"] {
+    display: none !important;
+  }
+
+  .toolbar-actions {
+    gap: 6px;
+  }
+
+  /* ── Workspace: vertical, scrollable ───── */
+  .workspace {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-bottom: 8px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /*
+   * Pane height = viewport minus:
+   *   - app padding top/bottom  (~16px + safe areas)
+   *   - toolbar height          (~48px)
+   *   - gap between toolbar and workspace (8px)
+   * We subtract the safe-area insets separately because the app-terminal
+   * already adds them to its padding, so we just need the raw ones here
+   * for the calc to hit the right number.
+   */
+  .pane-wrapper {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 72px);
+    min-height: 400px;
+    max-height: none;
+    overflow: hidden;
+  }
+
+  @supports not (height: 100dvh) {
+    .pane-wrapper {
+      height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 72px);
+    }
+  }
+
+  /* Internal scroll with iOS momentum */
+  .tab-content-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tabs: all 4 fit on one row */
+  .tab-btn {
+    font-size: 0.75rem;
+    padding: 6px 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .result-card,
+  .glass-panel {
+    max-width: 100%;
+  }
+
+  /* Modal: bottom sheet, respects home bar */
+  .modal-overlay {
+    align-items: flex-end;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: calc(92dvh - env(safe-area-inset-bottom, 0px));
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    margin: 0;
+    transform: translateY(100%);
+  }
+
+  .modal-overlay.active .modal-content {
+    transform: translateY(0);
   }
 }

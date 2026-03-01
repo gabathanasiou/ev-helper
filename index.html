@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
     <title>LeafGreen & FireRed EV Helper</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,32 +24,7 @@
     <div class="app-terminal">
         <div class="terminal-toolbar">
             <div class="terminal-title" style="display: flex; gap: 16px; align-items: center;">
-                <svg width="200" height="32" viewBox="0 0 200 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="logo-text-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#38bdf8" />
-                            <stop offset="100%" stop-color="#a78bfa" />
-                        </linearGradient>
-                        <linearGradient id="pokeball-top" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#ef4444" />
-                            <stop offset="100%" stop-color="#b91c1c" />
-                        </linearGradient>
-                        <linearGradient id="pokeball-bot" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#f8fafc" />
-                            <stop offset="100%" stop-color="#cbd5e1" />
-                        </linearGradient>
-                    </defs>
-                    <g transform="translate(0, 4)">
-                        <circle cx="12" cy="12" r="12" fill="#0f172a" />
-                        <path d="M 0 12 A 12 12 0 0 1 24 12 Z" fill="url(#pokeball-top)" />
-                        <path d="M 0 12 A 12 12 0 0 0 24 12 Z" fill="url(#pokeball-bot)" />
-                        <rect x="0" y="10" width="24" height="4" fill="#0f172a" />
-                        <circle cx="12" cy="12" r="4" fill="#0f172a" />
-                        <circle cx="12" cy="12" r="2.5" fill="#f8fafc" />
-                    </g>
-                    <text x="32" y="22" font-family="'Inter', -apple-system, sans-serif" font-weight="900"
-                        font-size="18" fill="url(#logo-text-grad)" letter-spacing="1">EV_HELPER</text>
-                </svg>
+                <span class="logo-wordmark">EV Helper</span>
                 <div class="game-selector game-dropdown"
                     style="padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.15);">
                     <button class="game-btn active" id="game-dropdown-trigger" title="Select Game">
@@ -96,18 +73,89 @@
                 </div>
             </div>
             <div class="toolbar-actions" style="display: flex; gap: 8px; align-items: center;">
+                <button id="btn-what-are-evs" class="btn btn-outline btn-small" title="What are EVs?">What are
+                    EVs?</button>
+                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
                 <button id="btn-zoom-out" class="btn btn-outline btn-small" title="Zoom Out">−</button>
                 <button id="btn-zoom-reset" class="btn btn-outline btn-small" title="Reset Zoom">100%</button>
                 <button id="btn-zoom-in" class="btn btn-outline btn-small" title="Zoom In">+</button>
                 <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
-                <button id="btn-add-pane" class="btn btn-outline btn-small" title="Open New Session">+ New
-                    Session</button>
+                <button id="btn-add-pane" class="btn btn-outline btn-small" title="Open New Research">+ New
+                    Research</button>
             </div>
         </div>
 
         <!-- Workspace contains 1 or more Panes -->
         <div id="workspace" class="workspace">
             <!-- SessionPanes are injected here by main.js -->
+        </div>
+
+        <!-- WHAT ARE EVS MODAL -->
+        <div id="ev-modal" class="modal-overlay">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2>What are EVs?</h2>
+                    <button class="btn-icon modal-close" id="btn-close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3>The Hidden Stats of Pokémon</h3>
+                    <p>
+                        Effort Values (EVs) are hidden values in the core Pokémon games that determine the growth of
+                        your Pokémon's stats.
+                        Unlike base stats (which are specific to a species) or Individual Values (IVs, which are
+                        essentially the Pokémon's genetics),
+                        EVs represent the "effort" or training a Pokémon puts in.
+                    </p>
+                    <p>
+                        Every time you defeat a Pokémon, your Pokémon gains EVs based on the species defeated. For
+                        example, defeating a Geodude yields Defense EVs, while defeating a Zubat yields Speed EVs.
+                    </p>
+                    <p>
+                        A Pokémon can have a maximum of 510 total EVs, with a maximum of 255 in any single stat.
+                        Importantly, at level 100,
+                        every 4 EVs in a specific stat equates to 1 additional stat point. This means a fully EV-trained
+                        Pokémon can have up to 63 extra points in a stat compared to an untrained one!
+                    </p>
+
+                    <h3>About This Project</h3>
+                    <p>
+                        The LeafGreen & FireRed EV Helper is an open-source tool designed to help you quickly figure out
+                        exactly which Pokémon you need to defeat to optimally train your teams in Generation 3 games
+                        without needing out-of-date text guides.
+                    </p>
+
+                    <div class="modal-links"
+                        style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+                        <a href="https://github.com/gabathanasiou/ev-helper" target="_blank" rel="noopener noreferrer"
+                            style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align: middle; margin-right: 8px;">
+                                <path
+                                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                                </path>
+                            </svg>
+                            View Source Code on GitHub
+                        </a>
+                        <a href="https://ko-fi.com/gabath" target="_blank" rel="noopener noreferrer"
+                            style="color: var(--success); text-decoration: none; font-weight: bold;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="vertical-align: middle; margin-right: 8px;">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                                </path>
+                            </svg>
+                            Support future projects on Ko-fi
+                        </a>
+                    </div>
+
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Data provided by <a href="https://pokeapi.co/" target="_blank" rel="noopener noreferrer"
+                            style="color: inherit;">PokéAPI</a>.
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- STATUS / LOADING OVERLAY -->

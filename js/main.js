@@ -91,7 +91,13 @@ class App {
 
     bindGlobalEvents() {
         this.btnAddPane.addEventListener('click', () => {
-            this.addPane();
+            const pane = this.addPane();
+            const isMobile = window.innerWidth <= 640;
+            if (isMobile) {
+                setTimeout(() => {
+                    pane.container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
             this.saveWorkspaceState();
         });
 
@@ -104,8 +110,16 @@ class App {
 
         this.workspace.addEventListener('openNewSession', (e) => {
             const { type, value } = e.detail;
-            const pane = this.addPane();
+            const triggeringPaneWrapper = e.target.closest('.pane-wrapper');
+            const isMobile = window.innerWidth <= 640;
+            const pane = this.addPane(null, triggeringPaneWrapper, isMobile);
             pane.triggerSearch(type, value);
+            // On mobile scroll the new (top) pane into view with a slight delay for reliability
+            if (isMobile) {
+                setTimeout(() => {
+                    pane.container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
             this.saveWorkspaceState();
         });
 
@@ -181,7 +195,7 @@ class App {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    addPane(id = null) {
+    addPane(id = null, relativeTo = null, prepend = false) {
         const paneId = id || this.nextPaneId++;
         if (id && id >= this.nextPaneId) {
             this.nextPaneId = id + 1;
@@ -193,13 +207,25 @@ class App {
 
         const pane = new SessionPane(paneWrapper, paneId);
         this.panes.set(paneId, pane);
-        this.workspace.appendChild(paneWrapper);
+
+        if (relativeTo && relativeTo.parentNode === this.workspace) {
+            if (prepend) {
+                relativeTo.before(paneWrapper); // insert before triggering pane (mobile: top)
+            } else {
+                relativeTo.after(paneWrapper);  // insert after triggering pane (desktop: side-by-side)
+            }
+        } else {
+            this.workspace.appendChild(paneWrapper);
+        }
 
         this.updateWorkspaceLayout();
+        this.updateCloseButtons();
         return pane;
     }
 
     removePane(id) {
+        // On mobile, always keep at least one pane open
+        if (window.innerWidth <= 640 && this.panes.size <= 1) return;
         if (this.panes.has(id)) {
             const pane = this.panes.get(id);
             pane.destroy(); // Unsubscribes from state and removes HTML node
@@ -208,11 +234,22 @@ class App {
             localStorage.removeItem(`evSessionData_${id}`);
             localStorage.removeItem(`evPaneHistory_${id}`);
             this.updateWorkspaceLayout();
+            this.updateCloseButtons();
         }
     }
 
     updateWorkspaceLayout() {
         // Tiling is now handled by CSS flex-wrap: wrap
+    }
+
+    updateCloseButtons() {
+        const canClose = this.panes.size > 1;
+        this.workspace.querySelectorAll('.btn-close-pane').forEach(btn => {
+            btn.disabled = !canClose;
+            btn.style.opacity = canClose ? '1' : '0.2';
+            btn.style.cursor = canClose ? 'pointer' : 'not-allowed';
+            btn.title = canClose ? 'Close Panel' : 'Cannot close the last Research session';
+        });
     }
 
     saveWorkspaceOrder() {
@@ -258,4 +295,32 @@ class App {
 // Boot application
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
+});
+
+// Event Listeners for EV Modal
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('ev-modal');
+    const openBtn = document.getElementById('btn-what-are-evs');
+    const closeBtn = document.getElementById('btn-close-modal');
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('active');
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+    }
+
+    // Close when clicking outside of modal content
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
 });

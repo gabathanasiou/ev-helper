@@ -1,0 +1,40 @@
+{
+  "name": "leaf_fire_helper",
+  "version": "1.0.0",
+  "description": "An advanced, blazing-fast web application designed to help Pokémon players plan, calculate, and target Effort Values (EVs) for their games across Generation 3. Built specifically to be seamless, beautiful, and extremely feature-rich without any server overhead.",
+  "main": "electron.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.github.gabathanasiou.ev-helper",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg"
+      ]
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gabathanasiou/ev-helper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gabathanasiou/ev-helper/issues"
+  },
+  "homepage": "https://github.com/gabathanasiou/ev-helper#readme",
+  "devDependencies": {
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1"
+  }
+}
