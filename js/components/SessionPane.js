@@ -58,8 +58,12 @@ export class SessionPane {
       <div class="pane-header" draggable="true" style="cursor: grab;">
         <h2 class="pane-title">Research <span>#${this.id}</span></h2>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-icon btn-clear-session" title="Clear Search Results" aria-label="Clear">🗑</button>
-          <button class="btn btn-icon btn-close-pane" title="Close Panel" aria-label="Close">×</button>
+          <button class="btn btn-icon btn-clear-session" title="Clear Search Results" aria-label="Clear">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+          </button>
+          <button class="btn btn-icon btn-close-pane" title="Close Panel" aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
 
