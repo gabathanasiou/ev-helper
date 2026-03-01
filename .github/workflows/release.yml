@@ -47,10 +47,128 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          generate_release_notes: false
+          body: |
+            ## 🌿 EV Helper ${{ github.ref_name }}
+
+            > A blazing fast EV training tool for Pokémon FireRed/LeafGreen & R/S/E
+
+            **🌐 Web App** — [gabathanasiou.github.io/ev-helper](https://gabathanasiou.github.io/ev-helper/)
+            **📦 npm** — [@gabathanasiou/ev-helper](https://www.npmjs.com/package/@gabathanasiou/ev-helper)
+
+            ---
+
+            ### Install (no Node.js required)
+
+            **Homebrew (macOS / Linux):**
+            ```bash
+            brew tap gabathanasiou/ev-helper
+            brew install ev-helper
+            ```
+
+            **Direct download:** Pick the right binary below ↓
+
+            | Platform | File |
+            |---|---|
+            | macOS Apple Silicon | `ev-helper-macos-arm64.tar.gz` |
+            | macOS Intel | `ev-helper-macos-x64.tar.gz` |
+            | Linux x64 | `ev-helper-linux-x64.tar.gz` |
+            | Windows x64 | `ev-helper-win-x64.zip` |
+
+            **With Node.js:**
+            ```bash
+            npx @gabathanasiou/ev-helper
+            ```
           files: |
             cli-app/bin/ev-helper-macos-arm64.tar.gz
             cli-app/bin/ev-helper-macos-x64.tar.gz
             cli-app/bin/ev-helper-linux-x64.tar.gz
             cli-app/bin/ev-helper-win-x64.zip
             cli-app/bin/SHA256SUMS.txt
-          generate_release_notes: true
+
+      - name: Save SHA256SUMS as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sha256sums
+          path: cli-app/bin/SHA256SUMS.txt
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    runs-on: ubuntu-latest
+    needs: build
+    # Requires a PAT with repo scope stored as HOMEBREW_TAP_TOKEN secret
+    # Go to: Settings → Secrets → Actions → New repository secret
+    if: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+
+    steps:
+      - name: Download SHA256SUMS
+        uses: actions/download-artifact@v4
+        with:
+          name: sha256sums
+
+      - name: Extract checksums
+        id: sums
+        run: |
+          echo "arm64=$(grep macos-arm64 SHA256SUMS.txt | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "x64=$(grep macos-x64 SHA256SUMS.txt | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux=$(grep linux-x64 SHA256SUMS.txt | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: gabathanasiou/homebrew-ev-helper
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula version and SHA256s
+        env:
+          VERSION: ${{ github.ref_name }}
+          ARM64: ${{ steps.sums.outputs.arm64 }}
+          X64: ${{ steps.sums.outputs.x64 }}
+          LINUX: ${{ steps.sums.outputs.linux }}
+        run: |
+          cd homebrew-tap
+          # Strip leading 'v' from tag for the version field
+          VER="${VERSION#v}"
+          sed -i "s/version \".*\"/version \"$VER\"/" Formula/ev-helper.rb
+          # Update SHA256s using line-targeted replacement
+          python3 - <<'EOF'
+          import re, os
+
+          arm64 = os.environ['ARM64']
+          x64   = os.environ['X64']
+          linux = os.environ['LINUX']
+
+          with open('Formula/ev-helper.rb', 'r') as f:
+              content = f.read()
+
+          # Replace each sha256 placeholder/value in order
+          lines = content.split('\n')
+          arm_done = x64_done = linux_done = False
+          for i, line in enumerate(lines):
+              if 'macos-arm64' in lines[i-1] if i > 0 else False:
+                  lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{arm64}"', line)
+                  arm_done = True
+              elif 'macos-x64' in lines[i-1] if i > 0 else False:
+                  lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{x64}"', line)
+                  x64_done = True
+              elif 'linux-x64' in lines[i-1] if i > 0 else False:
+                  lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{linux}"', line)
+                  linux_done = True
+
+          with open('Formula/ev-helper.rb', 'w') as f:
+              f.write('\n'.join(lines))
+
+          print(f'Updated: arm64={arm_done}, x64={x64_done}, linux={linux_done}')
+          EOF
+
+      - name: Commit and push formula update
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/ev-helper.rb
+          git commit -m "Update to $VERSION"
+          git push
