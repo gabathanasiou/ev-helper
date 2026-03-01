@@ -621,8 +621,8 @@ label {
 }
 
 .btn-icon:hover {
-  color: var(--danger);
-  transform: scale(1.1);
+  color: #fff;
+  opacity: 1;
 }
 
 .btn-undo:disabled,
