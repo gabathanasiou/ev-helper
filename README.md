@@ -1,6 +1,6 @@
 # EV Helper: FireRed & LeafGreen + R/S/E
 
-[**Live App**](https://gabathanasiou.github.io/ev-helper/) • [**Support on Ko-fi**](https://ko-fi.com/gabath)
+[**Live App**](https://gabathanasiou.github.io/ev-helper/) • [**NPM Package**](https://www.npmjs.com/package/@gabathanasiou/ev-helper) • [**Support on Ko-fi**](https://ko-fi.com/gabath)
 
 An advanced, blazing-fast web application designed to help Pokémon players plan, calculate, and target Effort Values (EVs) for their games across Generation 3. Built specifically to be seamless, beautiful, and extremely feature-rich without any server overhead.
 
