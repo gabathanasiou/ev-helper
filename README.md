@@ -39,20 +39,46 @@ A fully-featured terminal UI version of the EV Helper, built with **React + Ink*
 
 ### Installation
 
+**If you have Node.js installed** (easiest):
+
 ```bash
-# To run instantly without installing
+# Run instantly without installing
 npx @gabathanasiou/ev-helper
 
 # Or install globally
 npm install -g @gabathanasiou/ev-helper
 ```
 
-To build from source:
+**Via Homebrew** (no Node.js required):
+
+```bash
+brew tap gabathanasiou/ev-helper
+brew install ev-helper
+```
+
+**Direct download** (no Node.js required):
+
+Pre-built binaries for all platforms are available on the [Releases page](https://github.com/gabathanasiou/ev-helper/releases/latest).
+
+| Platform | File |
+|---|---|
+| macOS (Apple Silicon) | `ev-helper-macos-arm64.tar.gz` |
+| macOS (Intel) | `ev-helper-macos-x64.tar.gz` |
+| Linux x64 | `ev-helper-linux-x64.tar.gz` |
+| Windows x64 | `ev-helper-win-x64.zip` |
+
+```bash
+# macOS / Linux — download, extract, and run:
+tar -xzf ev-helper-macos-arm64.tar.gz
+./ev-helper-macos-arm64
+```
+
+### Building from source
 
 ```bash
 cd cli-app
 npm install
-npm run build
+npm run build:all   # compiles + packages all platform binaries into bin/
 ```
 
 ### Keybindings
@@ -71,8 +97,9 @@ npm run build
 ### Tech
 - **React + Ink** — React rendered to the terminal
 - **Babel** — JSX transpilation
+- **esbuild** — Bundles into a single file for packaging
+- **pkg** — Wraps the bundle + Node runtime into a standalone binary
 - **meow** — CLI argument parsing
-- **Lodash.isequal** — Smart list diffing for cursor stability
 
 ---
 
@@ -105,7 +132,7 @@ This project wouldn't be possible without the incredible work of the open-source
 - **[Ink](https://github.com/vadimdemedes/ink)**: Powers the CLI's React-to-terminal rendering. Truly magical.
 - **[React](https://reactjs.org/)**: Used extensively in the CLI layer.
 - **[Electron](https://www.electronjs.org/)**: Facilitated our native desktop experiment.
-- **[Vite](https://vitejs.dev/) / Babel**: Building and transpilation.
+- **[Babel](https://babeljs.io/) / [esbuild](https://esbuild.github.io/)**: Building and transpilation.
 
 ---
 

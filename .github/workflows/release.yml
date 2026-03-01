@@ -1,0 +1,56 @@
+name: Release CLI Binaries
+
+# Triggers when you push a tag like v1.0.5
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: cli-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: cli-app
+
+      - name: Build all platform binaries
+        run: npm run build:all
+        working-directory: cli-app
+
+      - name: Create tarballs for Homebrew
+        working-directory: cli-app/bin
+        run: |
+          tar -czf ev-helper-macos-arm64.tar.gz ev-helper-macos-arm64
+          tar -czf ev-helper-macos-x64.tar.gz ev-helper-macos-x64
+          tar -czf ev-helper-linux-x64.tar.gz ev-helper-linux-x64
+          zip ev-helper-win-x64.zip ev-helper-win-x64.exe
+
+      - name: Compute SHA256 checksums
+        working-directory: cli-app/bin
+        run: |
+          sha256sum ev-helper-macos-arm64.tar.gz ev-helper-macos-x64.tar.gz ev-helper-linux-x64.tar.gz ev-helper-win-x64.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cli-app/bin/ev-helper-macos-arm64.tar.gz
+            cli-app/bin/ev-helper-macos-x64.tar.gz
+            cli-app/bin/ev-helper-linux-x64.tar.gz
+            cli-app/bin/ev-helper-win-x64.zip
+            cli-app/bin/SHA256SUMS.txt
+          generate_release_notes: true

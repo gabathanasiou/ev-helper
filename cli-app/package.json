@@ -20,11 +20,29 @@
 		"build": "babel --out-dir=dist source",
 		"dev": "babel --out-dir=dist --watch source",
 		"prepublishOnly": "npm run build",
-		"test": "prettier --check . && xo && ava"
+		"test": "prettier --check . && xo && ava",
+		"build:bundle": "node build.mjs",
+		"build:binary": "pkg bundle.cjs --targets node18-macos-x64,node18-macos-arm64,node18-linux-x64,node18-win-x64 --output bin/ev-helper",
+		"build:all": "npm run build && npm run build:bundle && npm run build:binary"
 	},
 	"files": [
 		"dist"
 	],
+	"pkg": {
+		"targets": [
+			"node18-macos-x64",
+			"node18-macos-arm64",
+			"node18-linux-x64",
+			"node18-win-x64"
+		],
+		"outputPath": "bin",
+		"scripts": [
+			"node_modules/yoga-wasm-web/dist/*.js"
+		],
+		"assets": [
+			"node_modules/yoga-wasm-web/dist/*.wasm"
+		]
+	},
 	"publishConfig": {
 		"access": "public"
 	},
@@ -42,11 +60,14 @@
 		"@vdemedes/prettier-config": "^2.0.1",
 		"ava": "^5.2.0",
 		"chalk": "^5.2.0",
+		"esbuild": "^0.27.3",
 		"eslint-config-xo-react": "^0.27.0",
 		"eslint-plugin-react": "^7.32.2",
 		"eslint-plugin-react-hooks": "^4.6.0",
 		"import-jsx": "^5.0.0",
 		"ink-testing-library": "^3.0.0",
+		"pkg": "^5.8.1",
+		"postject": "^1.0.0-alpha.6",
 		"prettier": "^2.8.7",
 		"xo": "^0.53.1"
 	},
