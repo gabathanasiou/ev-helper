@@ -18,11 +18,14 @@
  */
 
 import { build } from 'esbuild';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Babel outputs .mjs locally (Node 25) but .js on CI (Node 20) — detect at runtime
+const ext = existsSync('dist/cli.mjs') ? 'mjs' : 'js';
 
 // ── Plugin: patch cli.mjs — replace import.meta with synthetic object ────────
 // meow requires importMeta.url to find the package directory. When bundled as
@@ -32,7 +35,7 @@ const patchCliMeta = {
     name: 'patch-cli-meta',
     setup(pluginBuild) {
         pluginBuild.onLoad(
-            { filter: /dist[/\\]cli\.mjs$/ },
+            { filter: /dist[/\\]cli\.(m)?js$/ },
             (args) => {
                 let src = readFileSync(args.path, 'utf8');
                 // Replace `importMeta: import.meta` with a synthetic object
@@ -82,7 +85,7 @@ const compatPlugin = {
 
 // ── Bundle ───────────────────────────────────────────────────────────────────
 await build({
-    entryPoints: ['dist/cli.mjs'],
+    entryPoints: [`dist/cli.${ext}`],
     bundle: true,
     platform: 'node',
     format: 'cjs',
