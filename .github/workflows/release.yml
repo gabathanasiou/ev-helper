@@ -1,4 +1,4 @@
-name: Release CLI Binaries
+name: Release
 
 # Triggers when you push a tag like v1.0.5
 on:
@@ -7,11 +7,10 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    name: Build & Release
+  # ── Job 1: Build CLI binaries (Linux runner — builds all platforms via pkg) ──
+  build-cli:
+    name: Build CLI Binaries
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -30,19 +29,88 @@ jobs:
         run: npm run build:all
         working-directory: cli-app
 
-      - name: Create tarballs for Homebrew
+      - name: Create tarballs
         working-directory: cli-app/bin
         run: |
-          tar -czf ev-helper-macos-arm64.tar.gz ev-helper-macos-arm64
-          tar -czf ev-helper-macos-x64.tar.gz ev-helper-macos-x64
-          tar -czf ev-helper-linux-x64.tar.gz ev-helper-linux-x64
-          zip ev-helper-win-x64.zip ev-helper-win-x64.exe
+          tar -czf ev-helper-cli-macos-arm64.tar.gz ev-helper-macos-arm64
+          tar -czf ev-helper-cli-macos-x64.tar.gz ev-helper-macos-x64
+          tar -czf ev-helper-cli-linux-x64.tar.gz ev-helper-linux-x64
+          zip ev-helper-cli-win-x64.zip ev-helper-win-x64.exe
 
       - name: Compute SHA256 checksums
         working-directory: cli-app/bin
         run: |
-          sha256sum ev-helper-macos-arm64.tar.gz ev-helper-macos-x64.tar.gz ev-helper-linux-x64.tar.gz ev-helper-win-x64.zip > SHA256SUMS.txt
+          sha256sum \
+            ev-helper-cli-macos-arm64.tar.gz \
+            ev-helper-cli-macos-x64.tar.gz \
+            ev-helper-cli-linux-x64.tar.gz \
+            ev-helper-cli-win-x64.zip > SHA256SUMS.txt
           cat SHA256SUMS.txt
+
+      - name: Upload CLI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-binaries
+          path: |
+            cli-app/bin/ev-helper-cli-macos-arm64.tar.gz
+            cli-app/bin/ev-helper-cli-macos-x64.tar.gz
+            cli-app/bin/ev-helper-cli-linux-x64.tar.gz
+            cli-app/bin/ev-helper-cli-win-x64.zip
+            cli-app/bin/SHA256SUMS.txt
+
+  # ── Job 2: Build Electron DMG (needs macOS runner for .dmg creation) ─────────
+  build-electron:
+    name: Build Electron App
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Electron DMG
+        run: npm run dist
+
+      - name: Rename DMG for clarity
+        run: |
+          cd dist
+          for f in *.dmg; do
+            mv "$f" "ev-helper-desktop-macos.dmg"
+          done
+
+      - name: Upload Electron artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-dmg
+          path: dist/ev-helper-desktop-macos.dmg
+
+  # ── Job 3: Create GitHub Release with everything ─────────────────────────────
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-cli, build-electron]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download CLI artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-binaries
+          path: release-files
+
+      - name: Download Electron artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-dmg
+          path: release-files
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -58,44 +126,44 @@ jobs:
 
             ---
 
-            ### Install (no Node.js required)
+            ### 🖥️ Desktop App (macOS)
 
-            **Homebrew (macOS / Linux):**
+            | File | Description |
+            |---|---|
+            | `ev-helper-desktop-macos.dmg` | macOS desktop app — drag to Applications |
+
+            ### 💻 CLI — Command Line App
+
+            | File | Platform |
+            |---|---|
+            | `ev-helper-cli-macos-arm64.tar.gz` | macOS Apple Silicon |
+            | `ev-helper-cli-macos-x64.tar.gz` | macOS Intel |
+            | `ev-helper-cli-linux-x64.tar.gz` | Linux x64 |
+            | `ev-helper-cli-win-x64.zip` | Windows x64 |
+
+            **Install CLI via Homebrew (no Node.js required):**
             ```bash
             brew tap gabathanasiou/ev-helper
             brew install ev-helper
             ```
 
-            **Direct download:** Pick the right binary below ↓
-
-            | Platform | File |
-            |---|---|
-            | macOS Apple Silicon | `ev-helper-macos-arm64.tar.gz` |
-            | macOS Intel | `ev-helper-macos-x64.tar.gz` |
-            | Linux x64 | `ev-helper-linux-x64.tar.gz` |
-            | Windows x64 | `ev-helper-win-x64.zip` |
-
-            **With Node.js:**
+            **Install CLI via npm:**
             ```bash
             npx @gabathanasiou/ev-helper
             ```
           files: |
-            cli-app/bin/ev-helper-macos-arm64.tar.gz
-            cli-app/bin/ev-helper-macos-x64.tar.gz
-            cli-app/bin/ev-helper-linux-x64.tar.gz
-            cli-app/bin/ev-helper-win-x64.zip
-            cli-app/bin/SHA256SUMS.txt
+            release-files/ev-helper-desktop-macos.dmg
+            release-files/ev-helper-cli-macos-arm64.tar.gz
+            release-files/ev-helper-cli-macos-x64.tar.gz
+            release-files/ev-helper-cli-linux-x64.tar.gz
+            release-files/ev-helper-cli-win-x64.zip
+            release-files/SHA256SUMS.txt
 
-      - name: Save SHA256SUMS as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sha256sums
-          path: cli-app/bin/SHA256SUMS.txt
-
+  # ── Job 4: Auto-update Homebrew formula ──────────────────────────────────────
   update-homebrew:
     name: Update Homebrew Formula
     runs-on: ubuntu-latest
-    needs: build
+    needs: create-release
     # Requires a PAT with repo scope stored as HOMEBREW_TAP_TOKEN secret
     # Go to: Settings → Secrets → Actions → New repository secret
     if: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
@@ -104,7 +172,7 @@ jobs:
       - name: Download SHA256SUMS
         uses: actions/download-artifact@v4
         with:
-          name: sha256sums
+          name: cli-binaries
 
       - name: Extract checksums
         id: sums
@@ -128,10 +196,8 @@ jobs:
           LINUX: ${{ steps.sums.outputs.linux }}
         run: |
           cd homebrew-tap
-          # Strip leading 'v' from tag for the version field
           VER="${VERSION#v}"
           sed -i "s/version \".*\"/version \"$VER\"/" Formula/ev-helper.rb
-          # Update SHA256s using line-targeted replacement
           python3 - <<'EOF'
           import re, os
 
@@ -142,27 +208,21 @@ jobs:
           with open('Formula/ev-helper.rb', 'r') as f:
               content = f.read()
 
-          # Replace each sha256 placeholder/value in order
           lines = content.split('\n')
-          arm_done = x64_done = linux_done = False
           for i, line in enumerate(lines):
-              if 'macos-arm64' in lines[i-1] if i > 0 else False:
+              prev = lines[i-1] if i > 0 else ''
+              if 'macos-arm64' in prev and 'sha256' in line:
                   lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{arm64}"', line)
-                  arm_done = True
-              elif 'macos-x64' in lines[i-1] if i > 0 else False:
+              elif 'macos-x64' in prev and 'sha256' in line:
                   lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{x64}"', line)
-                  x64_done = True
-              elif 'linux-x64' in lines[i-1] if i > 0 else False:
+              elif 'linux-x64' in prev and 'sha256' in line:
                   lines[i] = re.sub(r'sha256 ".*"', f'sha256 "{linux}"', line)
-                  linux_done = True
 
           with open('Formula/ev-helper.rb', 'w') as f:
               f.write('\n'.join(lines))
-
-          print(f'Updated: arm64={arm_done}, x64={x64_done}, linux={linux_done}')
           EOF
 
-      - name: Commit and push formula update
+      - name: Commit and push
         env:
           VERSION: ${{ github.ref_name }}
         run: |
