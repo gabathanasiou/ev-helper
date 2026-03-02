@@ -164,8 +164,7 @@ jobs:
     name: Update Homebrew Formula
     runs-on: ubuntu-latest
     needs: create-release
-    if: secrets.HOMEBREW_TAP_TOKEN != ''
-
+    continue-on-error: true
     steps:
       - name: Download SHA256SUMS
         uses: actions/download-artifact@v4
