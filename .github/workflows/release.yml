@@ -6,8 +6,12 @@ on:
     tags:
       - 'v*'
 
+# Grant top-level permissions to all jobs
+permissions:
+  contents: write
+
 jobs:
-  # ── Job 1: Build CLI binaries (Linux runner — builds all platforms via pkg) ──
+  # -- Job 1: Build CLI binaries (Linux runner -- builds all platforms via pkg) --
   build-cli:
     name: Build CLI Binaries
     runs-on: ubuntu-latest
@@ -58,7 +62,7 @@ jobs:
             cli-app/bin/ev-helper-cli-win-x64.zip
             cli-app/bin/SHA256SUMS.txt
 
-  # ── Job 2: Build Electron DMG (needs macOS runner for .dmg creation) ─────────
+  # -- Job 2: Build Electron DMG (needs macOS runner for .dmg creation) --
   build-electron:
     name: Build Electron App
     runs-on: macos-latest
@@ -81,9 +85,7 @@ jobs:
       - name: Rename DMG for clarity
         run: |
           cd dist
-          for f in *.dmg; do
-            mv "$f" "ev-helper-desktop-macos.dmg"
-          done
+          mv *.dmg ev-helper-desktop-macos.dmg
 
       - name: Upload Electron artifact
         uses: actions/upload-artifact@v4
@@ -91,13 +93,11 @@ jobs:
           name: electron-dmg
           path: dist/ev-helper-desktop-macos.dmg
 
-  # ── Job 3: Create GitHub Release with everything ─────────────────────────────
+  # -- Job 3: Create GitHub Release with everything --
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
     needs: [build-cli, build-electron]
-    permissions:
-      contents: write
 
     steps:
       - name: Download CLI artifacts
@@ -121,8 +121,8 @@ jobs:
 
             > A blazing fast EV training tool for Pokémon FireRed/LeafGreen & R/S/E
 
-            **🌐 Web App** — [gabathanasiou.github.io/ev-helper](https://gabathanasiou.github.io/ev-helper/)
-            **📦 npm** — [@gabathanasiou/ev-helper](https://www.npmjs.com/package/@gabathanasiou/ev-helper)
+            **🌐 Web App** -- [gabathanasiou.github.io/ev-helper](https://gabathanasiou.github.io/ev-helper/)
+            **📦 npm** -- [@gabathanasiou/ev-helper](https://www.npmjs.com/package/@gabathanasiou/ev-helper)
 
             ---
 
@@ -130,9 +130,9 @@ jobs:
 
             | File | Description |
             |---|---|
-            | `ev-helper-desktop-macos.dmg` | macOS desktop app — drag to Applications |
+            | `ev-helper-desktop-macos.dmg` | macOS desktop app -- drag to Applications |
 
-            ### 💻 CLI — Command Line App
+            ### 💻 CLI -- Command Line App
 
             | File | Platform |
             |---|---|
@@ -159,14 +159,12 @@ jobs:
             release-files/ev-helper-cli-win-x64.zip
             release-files/SHA256SUMS.txt
 
-  # ── Job 4: Auto-update Homebrew formula ──────────────────────────────────────
+  # -- Job 4: Auto-update Homebrew formula --
   update-homebrew:
     name: Update Homebrew Formula
     runs-on: ubuntu-latest
     needs: create-release
-    # Requires a PAT with repo scope stored as HOMEBREW_TAP_TOKEN secret
-    # Go to: Settings → Secrets → Actions → New repository secret
-    if: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+    if: secrets.HOMEBREW_TAP_TOKEN != ''
 
     steps:
       - name: Download SHA256SUMS

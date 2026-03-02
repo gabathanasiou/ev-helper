@@ -1,6 +1,6 @@
 {
 	"name": "@gabathanasiou/ev-helper",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Blazing fast CLI for Pokémon FireRed/LeafGreen & R/S/E EV training.",
 	"license": "MIT",
 	"author": "Gabriel Athanasiou",
